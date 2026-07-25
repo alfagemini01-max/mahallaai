@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% set active = 'users' %}
+{% block title %}Mas'ullar{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <h1>Mas'ullar va maqomlar</h1>
+  <p class="muted">Har bir mas'ulga login/parol (panel uchun) va bir martalik ulanish kodi (Telegram uchun) beriladi.</p>
+</header>
+
+{% if can_create %}
+<section class="card">
+  <h2>➕ Yangi mas'ul qo'shish</h2>
+  <form method="post" action="/users/create" class="form-grid">
+    <label>F.I.Sh.
+      <input name="full_name" required placeholder="Aliyev Vali Salimovich">
+    </label>
+    <label>Telefon
+      <input name="phone" placeholder="+998 90 123 45 67">
+    </label>
+    <label>Maqom
+      <select name="role" required>
+        {% for r in creatable %}
+        <option value="{{ r }}">{{ ROLE_LABELS.get(r, r) }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Mahalla <span class="hint-inline">(hokimiyat vakili uchun shart emas)</span>
+      <select name="mahalla_id">
+        <option value="">— tanlanmagan —</option>
+        {% for m in mahallas %}
+        <option value="{{ m.id }}">{{ m.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Login (panel uchun)
+      <input name="username" required placeholder="rais_bogiston">
+    </label>
+    <label>Parol
+      <input name="password" type="text" required minlength="6" placeholder="kamida 6 belgi">
+    </label>
+    <div class="form-actions">
+      <button class="btn primary" type="submit">Yaratish</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Ro'yxat</h2>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>F.I.Sh.</th><th>Maqom</th><th>Mahalla</th><th>Login</th>
+        <th>Telegram</th><th>Ulanish kodi</th><th>Holat</th><th>Amallar</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr class="{% if not u.is_active %}dim{% endif %}">
+        <td>{{ u.full_name }}<div class="muted small">{{ u.phone }}</div></td>
+        <td>{{ ROLE_LABELS.get(u.role, u.role) }}</td>
+        <td>{{ mahalla_names.get(u.mahalla_id, '—') }}</td>
+        <td><code>{{ u.username }}</code></td>
+        <td>{% if u.tg_id %}<span class="badge ok">✅ Ulangan</span>{% else %}<span class="badge">⏳ Ulanmagan</span>{% endif %}</td>
+        <td>
+          {% if u.link_code %}
+            <code class="code-pill">{{ u.link_code }}</code>
+            <div class="muted small">Botga: /ulanish {{ u.link_code }}</div>
+          {% else %}—{% endif %}
+        </td>
+        <td>{% if u.is_active %}<span class="badge ok">Faol</span>{% else %}<span class="badge off">O'chirilgan</span>{% endif %}</td>
+        <td class="actions">
+          <form method="post" action="/users/{{ u.id }}/newcode">
+            <button class="btn small" title="Yangi Telegram ulanish kodi">🔑 Yangi kod</button>
+          </form>
+          {% if user.role in GLOBAL_ROLES and u.role != 'super_admin' %}
+          <form method="post" action="/users/{{ u.id }}/toggle">
+            <button class="btn small">{% if u.is_active %}⛔ O'chirish{% else %}▶️ Yoqish{% endif %}</button>
+          </form>
+          <details class="inline-details">
+            <summary class="btn small">🔒 Parol</summary>
+            <form method="post" action="/users/{{ u.id }}/password" class="row-form">
+              <input name="new_password" placeholder="yangi parol" minlength="6" required>
+              <button class="btn small primary">Saqlash</button>
+            </form>
+          </details>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% endblock %}

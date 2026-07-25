@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% set active = 'issues' %}
+{% block title %}Muammo #{{ issue.id }}{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <a class="back" href="/issues">← Muammolar ro'yxati</a>
+  <h1>{{ CATEGORIES.get(issue.category, {}).get('emoji', '') }} Muammo #{{ issue.id }}</h1>
+  <p class="muted">{{ mahalla.name if mahalla else '—' }} · {{ issue.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+</header>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>Tafsilotlar</h2>
+    <dl class="detail">
+      <dt>Holat</dt>
+      <dd><span class="badge st-{{ issue.status }}">{{ STATUS_LABELS.get(issue.status, issue.status) }}</span>
+          {% if issue.reopen_count %} <span class="badge warn">🔁 {{ issue.reopen_count }} marta qayta ochilgan</span>{% endif %}</dd>
+      <dt>Soha</dt>
+      <dd>{{ CATEGORIES.get(issue.category, {}).get('label', issue.category) }}</dd>
+      <dt>Jiddiylik</dt>
+      <dd><span class="sev sev-{{ issue.severity }}">{{ SEVERITY.get(issue.severity, {}).get('label', issue.severity) }}</span></dd>
+      <dt>AI bayoni</dt>
+      <dd>{{ issue.summary }}</dd>
+      {% if issue.location_hint %}
+      <dt>Manzil</dt>
+      <dd>📍 {{ issue.location_hint }}</dd>
+      {% endif %}
+      <dt>Mas'ul maqom</dt>
+      <dd>{{ ROLE_LABELS.get(issue.assigned_role, issue.assigned_role or 'Tayinlanmagan') }}</dd>
+      <dt>Mas'ul shaxs</dt>
+      <dd>{{ assigned.full_name if assigned else '— tayinlanmagan —' }}</dd>
+      <dt>Aholi tasdig'i</dt>
+      <dd>👍 {{ issue.confirm_count }} ta ovoz</dd>
+      {% if issue.resolved_at %}
+      <dt>Yakunlangan</dt>
+      <dd>{{ issue.resolved_at.strftime('%d.%m.%Y %H:%M') }}</dd>
+      {% endif %}
+    </dl>
+
+    <h3>💬 Asl xabar</h3>
+    <div class="original-text">{{ issue.original_text }}</div>
+    <p class="hint">Maxfiylik: muallif shaxsi hisobotlarda ko'rsatilmaydi.</p>
+  </section>
+
+  <div>
+    {% if can_manage %}
+    <section class="card">
+      <h2>Boshqaruv</h2>
+      <form method="post" action="/issues/{{ issue.id }}/status" class="stack">
+        <label>Holatni o'zgartirish
+          <select name="new_status">
+            <option value="tasdiqlangan">📨 Mas'ulga yuborildi</option>
+            <option value="jarayonda">⏳ Jarayonda</option>
+            <option value="hal_qilindi">✅ Hal qilindi</option>
+            <option value="yopildi">✔️ Yopildi (yakuniy)</option>
+            <option value="rad_etildi">❌ Asossiz</option>
+          </select>
+        </label>
+        <button class="btn primary" type="submit">Saqlash</button>
+      </form>
+
+      {% if candidates %}
+      <hr>
+      <form method="post" action="/issues/{{ issue.id }}/assign" class="stack">
+        <label>Mas'ul shaxs tayinlash
+          <select name="user_id">
+            {% for c in candidates %}
+            <option value="{{ c.id }}">{{ c.full_name }} — {{ ROLE_LABELS.get(c.role, c.role) }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="btn" type="submit">Tayinlash</button>
+      </form>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <h2>Harakatlar tarixi</h2>
+      <ul class="timeline">
+        {% for h in history %}
+        <li>
+          <div class="tl-time">{{ h.created_at.strftime('%d.%m %H:%M') }}</div>
+          <div class="tl-body"><b>{{ h.actor }}</b> — {{ h.action }}</div>
+        </li>
+        {% else %}
+        <li><div class="tl-body muted">Tarix bo'sh.</div></li>
+        {% endfor %}
+      </ul>
+    </section>
+  </div>
+</div>
+
+{% endblock %}

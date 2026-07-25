@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% set active = 'mahallas' %}
+{% block title %}Mahallalar{% endblock %}
+{% block content %}
+
+<header class="page-head">
+  <h1>Mahallalar</h1>
+  <p class="muted">Har bir mahalla Telegram guruhi bilan bog'lanadi. Guruh ID ni olish uchun botni guruhga qo'shing yoki guruhda <code>/chatid</code> yozing.</p>
+</header>
+
+<section class="card">
+  <h2>➕ Yangi mahalla qo'shish</h2>
+  <form method="post" action="/mahallas/create" class="form-grid">
+    <label>Mahalla nomi
+      <input name="name" required placeholder="Bog'iston mahallasi">
+    </label>
+    <label>Tuman / shahar
+      <input name="district" placeholder="Yunusobod tumani, Toshkent">
+    </label>
+    <label>Telegram guruh ID
+      <input name="chat_id" placeholder="-1001234567890 (keyin ham kiritsa bo'ladi)">
+    </label>
+    <div class="form-actions">
+      <button class="btn primary" type="submit">Qo'shish</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Ro'yxat</h2>
+  <table class="table">
+    <thead>
+      <tr><th>Nomi</th><th>Tuman</th><th>Guruh ID</th><th>Mas'ullar</th><th>Ochiq muammolar</th><th>Holat</th><th>Amallar</th></tr>
+    </thead>
+    <tbody>
+      {% for m in mahallas %}
+      <tr class="{% if not m.is_active %}dim{% endif %}">
+        <td><b>{{ m.name }}</b></td>
+        <td>{{ m.district or '—' }}</td>
+        <td>
+          <form method="post" action="/mahallas/{{ m.id }}/update" class="row-form">
+            <input name="chat_id" value="{{ m.chat_id or '' }}" placeholder="-100...">
+            <button class="btn small">💾</button>
+          </form>
+        </td>
+        <td class="num">{{ counts[m.id].users }}</td>
+        <td class="num">{{ counts[m.id].open }}</td>
+        <td>{% if m.is_active %}<span class="badge ok">Faol</span>{% else %}<span class="badge off">O'chirilgan</span>{% endif %}</td>
+        <td class="actions">
+          <form method="post" action="/mahallas/{{ m.id }}/toggle">
+            <button class="btn small">{% if m.is_active %}⛔ O'chirish{% else %}▶️ Yoqish{% endif %}</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="empty">Hali mahalla qo'shilmagan. Yuqoridagi shakldan boshlang.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% endblock %}
